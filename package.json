@@ -1,5 +1,5 @@
 {
-  "engines":{
+  "engines": {
     "node": "8.5.0",
     "npm": "2.1.x"
   },
