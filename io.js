@@ -11,50 +11,40 @@ var ttr_arr = []
 var bal_arr = undefined;
 var dates_arr = []
 var dates_ = undefined;
-var array = ['Âëàä', 'Áîãäàí', 'Äèìà', 'Ğóáàí', 'Íèêèòà', 'Ğóñëàí', 'Äàíèèë']
+var array = ['Ğ’Ğ»Ğ°Ğ´', 'Ğ‘Ğ¾Ğ³Ğ´Ğ°Ğ½', 'Ğ”Ğ¸Ğ¼Ğ°', 'Ğ ÑƒĞ±Ğ°Ğ½', 'ĞĞ¸ĞºĞ¸Ñ‚Ğ°', 'Ğ ÑƒÑĞ»Ğ°Ğ½', 'Ğ”Ğ°Ğ½Ğ¸Ğ¸Ğ»']
 
 function loadID() {
     id_arr = id_list.split('\n')
-    for (var i = id_arr.length; i >= 0; i--) {
-        if (id_arr[i] == "" || id_arr[i] == 'undefined' || id_arr[i] == '\r') {
+    for (var i = id_arr.length; i >= 0; i--)
+        if (id_arr[i] == "" || id_arr[i] == 'undefined' || id_arr[i] == '\r')
             id_arr.remove(i)
-        }
-    }
-    for (var i = 0; i < id_arr.length; i++) {
+    for (var i = 0; i < id_arr.length; i++)
         id_arr[i] = id_arr[i].split('\r').join('')
-    }
 }
 
 function loadBalance()
 {
     ttr_arr = ttr.split('\n')
-    for (var i = ttr_arr.length; i >= 0; i--) {
-        if (ttr_arr[i] == "" || ttr_arr[i] == 'undefined' || ttr_arr[i] == '\r') {
+    for (var i = ttr_arr.length; i >= 0; i--)
+        if (ttr_arr[i] == "" || ttr_arr[i] == 'undefined' || ttr_arr[i] == '\r')
             ttr_arr.remove(i)
-        }
-    }
-    for (var i = 0; i < ttr_arr.length; i++) {
+    for (var i = 0; i < ttr_arr.length; i++)
         ttr_arr[i] = ttr_arr[i].split('\r').join('npm')
-    }
     bal_arr = new Dictionary();
-    for (var i = 0; i < id_arr.length; i++) {
+    for (var i = 0; i < id_arr.length; i++)
         bal_arr.store(id_arr[i], ttr_arr[i]);
-    }
 }
 
 function loadColldowns()
 {
     dates_arr = dates.split('\n')
-    for (var i = dates_arr.length; i >= 0; i--) {
-        if (dates_arr[i] == "" || dates_arr[i] == 'undefined' || dates_arr[i] == '\r') {
+    for (var i = dates_arr.length; i >= 0; i--)
+        if (dates_arr[i] == "" || dates_arr[i] == 'undefined' || dates_arr[i] == '\r')
             dates_arr.remove(i)
-        }
-    }
-    for (var i = 0; i < dates_arr.length; i++) {
+    for (var i = 0; i < dates_arr.length; i++)
         dates_arr[i] = dates_arr[i].split('\r').join('')
-    }
     dates_ = new Dictionary();
-    for (var i = 0; i < id_arr.length; i++) {
+    for (var i = 0; i < id_arr.length; i++)
         dates_.store(id_arr[i], dates_arr[i]);
     }
 }
