@@ -11,14 +11,13 @@ bot.onText(/\/start/, msg => {
 
 
 
-    const text =`Здарова твgарына ${msg.from.first_name}!\nШо тебе надо?`
-    bot.sendMessage(msg.chat.id, text, {
-        reply_markup:{
-            keyboard:[
-                ['/daun', '/kazini4']
-            ]
-        }
-
+const text =`Здарова твgарына ${msg.from.first_name}!\nШо тебе надо?`
+bot.sendMessage(msg.chat.id, text, {
+    reply_markup:{
+        keyboard:[
+            ['/daun', '/kazini4']
+        ]
+      }
     })
 })
 
@@ -115,9 +114,7 @@ for(var i=id_arr.length; i>=0;i--){
 }
 for(var i=0; i<id_arr.length;i++){
     id_arr[i]=id_arr[i].split('\r').join('')
-    //id_arr[i]=id_arr[i].replace(/\/r/g, '/');
 }
-//console.log(id_arr)
 
 var ttr_arr=ttr.split('\n')
 
