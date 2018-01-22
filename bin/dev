@@ -1,2 +1,5 @@
 require('dotenv/config')
 require('./../index.js')
+require('./../io.js')
+require('./../helper.js')
+require('./../structs.js')

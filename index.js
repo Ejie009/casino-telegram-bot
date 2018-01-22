@@ -57,12 +57,13 @@ bot.onText(/\/balance/, msg => {
 
 bot.onText(/\/kazini4/, msg => {
     bot.sendMessage(msg.chat.id, 'Добро пожаловать в DDR! ВЕЛКОМ! ваши пожелания...', {
-        reply_markup:{
-            keyboard:[
+        reply_markup:
+        {
+            keyboard:
+            [
                 ['/balance','/sabju', '/play']
             ]
         }
-
     })
     console.log(msg);
 })
