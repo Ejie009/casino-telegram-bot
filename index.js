@@ -1,17 +1,6 @@
-const TelegramBot = require('node-telegram-bot-api')
-const fs = require('fs');
-require('dotenv/config')
-var tok = process.env.SECRET_TOKEN;
-console.log(process.env.SECRET_TOKEN);
-const TOKEN =tok
-
-const bot = new TelegramBot(TOKEN, {polling: true})
-var array = ['Влад','Богдан','Дима','Рубан','Никита','Руслан','Даниил']
 bot.onText(/\/start/, msg => {
-
-const text =`Здарова твgарына ${msg.from.first_name}!\nШо тебе надо?`
-
-bot.sendMessage(msg.chat.id, text, {
+    const text =`Здарова твgарына ${msg.from.first_name}!\nШо тебе надо?`
+    bot.sendMessage(msg.chat.id, text, {
     reply_markup:{
         keyboard:[
             ['/daun', '/kazini4']
@@ -19,153 +8,6 @@ bot.sendMessage(msg.chat.id, text, {
       }
     })
 })
-
-{
-    var Dictionary = function ()
-    {
-        this.keys = {};
-        this.length = 0;
-        this.defaultValue = null;
-    };
-
-    Dictionary.prototype.store = function(key, value) {
-        this.keys[key] = value;
-        this.length++;
-    };
-
-    Dictionary.prototype.fetch = function(key) {
-        var value = this.keys[key];
-
-        if (value) {
-            return value;
-        } else {
-            if (this.defaultValue) return this.defaultValue;
-            return null;
-        }
-    };
-
-    Dictionary.prototype.hasKey = function(key) {
-        for (var k in this.keys) {
-            if (key == k) {
-                return true;
-            } else {
-                return false;
-            }
-        };
-        return false;
-    };
-
-    Dictionary.prototype.remove = function(key) {
-        if (this.keys[key]) {
-            delete this.keys[key];
-            this.length--;
-        }
-    };
-
-    Dictionary.prototype.reject = function(callback) {
-        for (var k in this.keys) {
-            if (callback(k, this.keys[k])) {
-                delete this.keys[k];
-            }
-        }
-    };
-
-    Dictionary.prototype.random = function() {
-        var keys = [];
-
-        for (var k in this.keys) {
-            keys.push(k);
-        }
-
-        return keys[Math.floor(Math.random() * keys.length)];
-    };
-
-    module.exports = Dictionary;
-}
-
-{
-    var player = function (state_, id_, bet_, chance_)
-    {
-        this.state = state_;
-        this.id = id_;
-        this.bet = bet_;
-        this.chance = chance_;
-    };
-
-    module.exports = player;
-}
-
-var players = [];
-
-
-var keyy=true
-
-var keyyr= fs.readFileSync("keyy.txt", "utf8")
-var file1r = fs.readFileSync("cooldown1.txt", "utf8")
-var id_list = fs.readFileSync("id_list.txt", "utf8")
-var ttr = fs.readFileSync("ttr.txt","utf8")
-var dates = fs.readFileSync("dates.txt", "utf8")
-
-Array.prototype.remove = function(from, to) {
-    var rest = this.slice((to || from) + 1 || this.length);
-    this.length = from < 0 ? this.length + from : from;
-    return this.push.apply(this, rest);
-};
-
-var id_arr=id_list.split('\n')
-for(var i=id_arr.length; i>=0;i--){
-    if(id_arr[i]==""||id_arr[i]=='undefined'||id_arr[i]=='\r'){
-        id_arr.remove(i)
-    }
-}
-
-for(var i=0; i<id_arr.length;i++){
-    id_arr[i]=id_arr[i].split('\r').join('')
-}
-
-var ttr_arr=ttr.split('\n')
-
-for(var i=ttr_arr.length; i>=0;i--){
-    if(ttr_arr[i]==""||ttr_arr[i]=='undefined'||ttr_arr[i]=='\r'){
-        ttr_arr.remove(i)
-    }
-}
-for(var i=0; i<ttr_arr.length;i++){
-    ttr_arr[i]=ttr_arr[i].split('\r').join('npm')
-}
-
-var bal_arr = new Dictionary();
-for(var i=0; i<id_arr.length;i++){
-    bal_arr.store(id_arr[i],ttr_arr[i]);
-}
-
-console.log(bal_arr);
-console.log(ttr_arr)
-
-var dates_arr=dates.split('\n')
-for(var i=dates_arr.length; i>=0;i--){
-    if(dates_arr[i]==""||dates_arr[i]=='undefined'||dates_arr[i]=='\r'){
-        dates_arr.remove(i)
-    }
-}
-for(var i=0; i<dates_arr.length;i++){
-    dates_arr[i]=dates_arr[i].split('\r').join('')
-}
-
-var dates_ = new Dictionary();
-for(var i=0; i<id_arr.length;i++){
-    dates_.store(id_arr[i],dates_arr[i]);
-}
-
-console.log(dates_)
-
-var cooldown = new Date()
-if(file1r!='0') cooldown.setTime(file1r)
-
-var cd;
-
-var cooldown2= new Date()
-keyy = (keyyr == 'true')
 
 bot.onText(/\/daun/, msg => {
     cooldown2 = new Date();
@@ -178,10 +20,6 @@ bot.onText(/\/daun/, msg => {
     }
     else bot.sendMessage(msg.chat.id,`Перезарядка!! Осталось еще ${String(24*60-cd)} м!`)
 })
-
-function random (low, high) {
-    return Math.random() * (high - low) + low;
-}
 
 bot.onText(/\/play/, msg => {
     for(var i=0; i<players.length; i++){
@@ -204,7 +42,6 @@ bot.onText(/\/sabju/, msg => {
     else bot.sendMessage(msg.chat.id,`До следующего поступления сабжей осталось ${60-(datenow-dates_.fetch(msg.from.id))/60000} минут` )
 })
 
-var bal_edit = false;
 
 bot.onText(/\/set_balance/, msg =>{
     if (msg.from.id == 316849379)
@@ -229,8 +66,6 @@ bot.onText(/\/kazini4/, msg => {
     })
     console.log(msg);
 })
-
-
 
 bot.on('message', msg =>
 {
@@ -306,11 +141,7 @@ bot.on('message', msg =>
                 else bot.sendMessage(msg.chat.id,`\u{274C}\u{274C}\u{274C}Пользователь ${msg.from.first_name}, проиграл ставку в размере ${players[i].bet} сабжей.\nТеперь его баланс составляет - ${bal_arr.fetch(msg.from.id)}! roflanpominki!`)
                 players.remove(i);
             }
-            fs.writeFileSync("ttr.txt","");
-            for (var i = 0; i < id_arr.length; i++)
-                if (bal_arr.fetch(msg.from.id) == null)
-                    fs.appendFileSync("ttr.txt", "0\n")
-                else fs.appendFileSync("ttr.txt",bal_arr.fetch(id_arr[i]).toString()+'\n');
+            saveBalance()
             return
         }
     }
@@ -376,26 +207,39 @@ bot.on('message', msg =>
             break
         }
     }
-
-    if(!isExists){
+    if (!isExists) {
         id_arr.push(msg.from.id.toString());
-        fs.writeFileSync("id_list.txt","");
-        for(var i =0;i<id_arr.length;i++){
-            fs.appendFileSync("id_list.txt",id_arr[i]+'\n');
-        }
-    }
 
-    fs.writeFileSync("dates.txt","");
-    for(var i =0;i<dates_arr.length;i++){
-        fs.appendFileSync("dates.txt",dates_.fetch(id_arr[i])+'\n');
-    }
-
-    fs.writeFileSync("ttr.txt","");
-    for(var i =0;i<id_arr.length;i++){
-        if(bal_arr.fetch(msg.from.id)==null) {fs.appendFileSync("ttr.txt","0\n")}
-        else { 
-            fs.appendFileSync("ttr.txt",bal_arr.fetch(id_arr[i]).toString()+'\n');
-            fs.writeFileSync("cooldown1.txt", cooldown.getTime());
-        }
-    }
+    saveID()
+    saveDates()
+    saveBalance()
 })
+
+const TelegramBot = require('node-telegram-bot-api')
+const fs = require('fs');
+require('dotenv/config')
+var tok = process.env.SECRET_TOKEN;
+console.log(process.env.SECRET_TOKEN);
+const TOKEN = tok
+const bot = new TelegramBot(TOKEN, { polling: true })
+
+var players = [];
+var keyy = true
+
+loadID();
+loadBalance();
+loadColldowns();
+
+console.log(bal_arr);
+console.log(ttr_arr)
+
+
+console.log(dates_)
+
+var cooldown = new Date()
+if (file1r != '0') cooldown.setTime(file1r)
+var cd;
+
+var cooldown2 = new Date()
+keyy = (keyyr == 'true')
+var bal_edit = false;
