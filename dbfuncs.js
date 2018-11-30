@@ -31,6 +31,15 @@ function MongoFuncs() {
         return true;
     }
 
+    async function dbChangePlayerState(id, newState) {
+        await userList.updateOne({uid : id}, {$set:{ state : newState}});
+        return true;
+    }
+
+    async function dbUpdatePlayerBet(id, newBet) {
+        await userList.updateOne({uid : id}, {$set: { currentBet : newBet }});
+    }
+
     async function dbInsertAdmin(player) {
         if(!player.hasOwnProperty("admin")) player.admin = true;
             await userList.insertOne(player, function(err, res) {
@@ -42,6 +51,10 @@ function MongoFuncs() {
 
     async function dbGetCustom(filter) {
         return await userList.find(filter, { projection: { admin: 0 } }).toArray();
+    }
+
+    async function dbGetPlayerById(id) {
+        return await userList.find({ uid: id}).toArray();
     }
 
     async function dbGetPlayers() {
@@ -57,6 +70,9 @@ function MongoFuncs() {
     }
 
     return {
+        dbUpdatePlayerBet,
+        dbGetPlayerById,
+        dbChangePlayerState,
         dbGetCustom,
         dbGetAdmins,
         dbGetPlayers,

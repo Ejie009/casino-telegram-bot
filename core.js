@@ -1,11 +1,12 @@
 function Core() {
-    const MongoFuncs = require("./dbfuncs");
 
+    const MongoFuncs = require("./dbfuncs");
+    const Config = require("./config.json")
     const Extra = require('telegraf/extra')
     const Markup = require('telegraf/markup')
 
     const keyboard = Markup.inlineKeyboard([
-        Markup.urlButton('❤️', 'http://telegraf.js.org'),
+        Markup.callbackButton('Начать игру️', Config.CALLBACKS.GAME_START),
         Markup.callbackButton('Delete', 'delete')
     ]);
 
@@ -19,10 +20,56 @@ function Core() {
                 ctx.reply(`Дароу, ты первый раз в этом боте?\nТогда рекомендую почитать /help дабы понять как играть.
 Удачи!`);
                 MongoFuncs.dbInsertPlayer({
-                    "uid" : ctx.message.from.id,
-                    "name" : ctx.message.from.first_name,
-                    "balance" : 500
+                    "uid": ctx.message.from.id,
+                    "name": ctx.message.from.first_name,
+                    "balance": 500,
+                    "state": 0,
+                    "current_bet": {
+                        "bet_chance": 0,
+                        "bet_size": 0
+                    }
                 });
+            }
+        });
+    }
+
+    function callbackHandler(ctx) {
+        switch (ctx.callbackQuery.data) {
+            case Config.CALLBACKS.GAME_START:
+                ctx.reply(`Во что будем играть?`, Extra.markup(Markup.inlineKeyboard([
+                    Markup.callbackButton('JAD', Config.CALLBACKS.GAME_JAD),
+                    Markup.callbackButton('POKER', Config.CALLBACKS.GAME_POKER)
+                ])));
+            break;
+            case Config.CALLBACKS.GAME_JAD:
+                ctx.reply(`Напишите размер ставки и шанс победы (через пробел)`);
+                MongoFuncs.dbChangePlayerState(ctx.update.callback_query.from.id, 1);
+            break;
+        }
+        ctx.answerCbQuery(`selected ${ctx.update.callback_query.data}`)
+    }
+
+    function textHandler(ctx) {
+        MongoFuncs.dbGetPlayerById(ctx.message.from.id).then((res) => {
+            switch (res[0].state) {
+                case 0:
+                    ctx.reply(`Не понял :(`);
+                    break;
+                case 1:
+                    if(/\d+/gm.test(ctx.message.text)) {
+                        let result = ctx.message.text.match(/\d+/gm);
+                        console.log(result)
+                        if (result.length !== 2) {
+                            ctx.reply(`Уупс! Что-то забыли указать! Попробуйте ещё раз.`)
+                        } else {
+                            MongoFuncs.dbUpdatePlayerBet(ctx.message.from.id, {
+                                "bet_size": result[0],
+                                "bet_chance": result[1]
+                            });
+                            ctx.reply(`Ставка успешно выполнена!`);
+                        }
+                    }
+                    else ctx.reply(`Что-то вы совсем не так написали. Мб по ебалу? (еще раз)`);
             }
         });
     }
@@ -48,7 +95,9 @@ function Core() {
         onStart,
         onGetList,
         onHelp,
-        dumpDB : MongoFuncs.dbDump
+        dumpDB : MongoFuncs.dbDump,
+        callbackHandler,
+        textHandler
     }
 }
 

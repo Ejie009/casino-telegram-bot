@@ -1,0 +1,17 @@
+{
+  "CALLBACKS": {
+    "GAME_START": "game_start",
+    "GAME_END": "game_end",
+    "GAME_JAD": "game_jad",
+    "GAME_POKER": "game_poker"
+  },
+  "PLAYER": {
+    "UID" : "uid",
+    "NAME" : "name",
+    "BALANCE" : "balance",
+    "STATE" : "state",
+    "CURRENT_BET" : "current_bet",
+    "BET_SIZE" : "bet_size",
+    "BET_CHANCE" : "bet_chance"
+  }
+}

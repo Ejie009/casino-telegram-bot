@@ -9,6 +9,9 @@ bot.hears(/\/get/, (ctx) => Core.onGetList(ctx));
 bot.hears(/\/db_drop/, Core.dumpDB);
 bot.hears(/\/help/, (ctx) => Core.onHelp(ctx));
 
+bot.on("text", (ctx) => Core.textHandler(ctx));
+bot.on("callback_query", (ctx) => Core.callbackHandler(ctx));
+
 bot.telegram.setWebhook(process.env.SERVER_URL+process.env.SECRET_PATH)
 
 const app = express();
