@@ -8,6 +8,8 @@ bot.start((ctx) => Core.onStart(ctx));
 bot.hears(/\/get/, (ctx) => Core.onGetList(ctx));
 bot.hears(/\/db_drop/, Core.dumpDB);
 bot.hears(/\/help/, (ctx) => Core.onHelp(ctx));
+bot.hears(/\/set*/, (ctx) => Core.onSetBalance(ctx))
+bot.hears(/\/balance/, (ctx) => Core.onBalance(ctx))
 
 bot.on("text", (ctx) => Core.textHandler(ctx));
 bot.on("callback_query", (ctx) => Core.callbackHandler(ctx));
