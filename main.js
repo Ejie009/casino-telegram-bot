@@ -1,18 +1,18 @@
 const express = require('express');
 const Telegraf = require('telegraf');
 const Core = require('./core');
-const bot = new Telegraf(process.env.BOT_TOKEN, {telegram:{webhookReply:false}});
+const bot = new Telegraf(process.env.BOT_TOKEN, { telegram:{ webhookReply:false } });
 
-bot.start((ctx) => Core.onStart(ctx));
+bot.start(Core.onStart);
 
-bot.hears(/\/get/, (ctx) => Core.onGetList(ctx));
+bot.hears(/\/get/, Core.onGetList);
 bot.hears(/\/db_drop/, Core.dumpDB);
-bot.hears(/\/help/, (ctx) => Core.onHelp(ctx));
-bot.hears(/\/set*/, (ctx) => Core.onSetBalance(ctx))
-bot.hears(/\/balance/, (ctx) => Core.onBalance(ctx))
+bot.hears(/\/help/, Core.onHelp);
+bot.hears(/\/set*/, Core.onSetBalance)
+bot.hears(/\/balance/, Core.onBalance)
 
-bot.on("text", (ctx) => Core.textHandler(ctx));
-bot.on("callback_query", (ctx) => Core.callbackHandler(ctx));
+bot.on("text", Core.textHandler);
+bot.on("callback_query", Core.callbackHandler);
 
 bot.telegram.setWebhook(process.env.SERVER_URL+process.env.SECRET_PATH)
 

@@ -1,179 +1,150 @@
-function Core() {
+async function Core() {
 
-    const MongoFuncs = require("./dbfuncs");
-    const Config = require("./config.json")
-    const Extra = require('telegraf/extra')
-    const Markup = require('telegraf/markup')
+    const mongoFuncs = require('./dbfuncs');
+    const config = require("./config.js");
+    const keyboards = require('./keyboards');
+    const locale = require('./locale');
 
-    const MarkUpKeyboards = {
-        HELLO: Markup.inlineKeyboard([
-            Markup.callbackButton('Начать игру', Config.CALLBACKS.GAME_START),
-            Markup.callbackButton('Узнать баланс', Config.CALLBACKS.GAME_BALANCE)]).extra(),
-        PLAY: Markup.inlineKeyboard([
-            Markup.callbackButton('JAD', Config.CALLBACKS.GAME_JAD),
-            Markup.callbackButton('POKER', Config.CALLBACKS.GAME_POKER)
-        ]).extra()
-    }
-    MongoFuncs.dbInit().then(console.log);
+    await mongoFuncs.dbInit();
 
-    function onStart(ctx) {
-        userExist(ctx.message.from.id).then((exists) => {
-            console.log(exists);
-            if(exists) ctx.reply(`Здарова бро-${ctx.message.from.first_name}!\nШо тебе надо?`, MarkUpKeyboards.HELLO);
-            else {
-                ctx.reply(`Дароу, ты первый раз в этом боте?\nТогда рекомендую почитать /help дабы понять как играть.\nУдачи!`, MarkUpKeyboards.HELLO);
-                MongoFuncs.dbInsertPlayer({
-                    [Config.USER.UID]: ctx.message.from.id,
-                    [Config.USER.NAME]: ctx.message.from.first_name,
-                    [Config.USER.BALANCE]: 500,
-                    [Config.USER.STATE]: 0,
-                    [Config.USER.CURRENT_BET]: {
-                        [Config.USER.BET_CHANCE]: 0,
-                        [Config.USER.BET_SIZE]: 0
-                    }
-                });
-            }
-        });
-    }
-
-    function callbackHandler(ctx) {
-        switch (ctx.update.callback_query.data) {
-            case Config.CALLBACKS.GAME_START:
-                ctx.reply(`Во что будем играть?`, MarkUpKeyboards.PLAY);
-            break;
-            case Config.CALLBACKS.GAME_JAD:
-                MongoFuncs.dbGetUserById(ctx.update.callback_query.from.id).then((player) => {
-                    if(player.balance === 0) {
-                        ctx.reply(`Как будут деньги - приходи, а пока иди нахуй чмо`);
-                    } else {
-                        ctx.reply(`Напишите шанс победы`, Markup.keyboard([['50'], ['25', '10', '5']]).oneTime().resize().extra());
-                        MongoFuncs.dbChangePlayerState(ctx.update.callback_query.from.id, 1);
-                    }
-                })
-            break;
-            case Config.CALLBACKS.GAME_POKER:
-                ctx.reply(`В разработке. идите нахуй пока что (ну или пососите мне чл3н)) )`);
-            break;
-            case Config.CALLBACKS.GAME_BALANCE:
-                onBalance(ctx);
+    async function onStart(ctx) {
+        let exists = await userExist(ctx.message.from.id);
+        let lang = await mongoFuncs.dbGetUserLanguage(ctx.message.from.id);
+        if (exists) ctx.reply(locale.helloBro(ctx.message.from.id), keyboards.hello);
+        else {
+            ctx.reply(locale.helloWho, keyboards.hello(lang));
+            mongoFuncs.dbInsertPlayer(userWrapper(ctx.message.from.id, ctx.message.from.first_name, 500, 0, 0, 0));
         }
-        ctx.answerCbQuery(`selected ${ctx.update.callback_query.data}`)
     }
 
-    function textHandler(ctx) {
-        MongoFuncs.dbGetUserById(ctx.message.from.id).then((res) => {
-            console.log(res);
-            switch (res.state) {
-                case 0:
-                     ctx.reply(`Не понял :(`);
-                    break;
-                case 1:
-                    if(/\d+(\.\d+)?/gm.test(ctx.message.text)) {
-                        let result = ctx.message.text.match(/\d+/);
-                        if (result.length !== 1) {
-                            ctx.reply(`Уупс! Что-то не понял(! Попробуйте ещё раз.`)
-                        } else {
-                            if(result[0] > 0 && result[0] < 100)
-                            {
-                                MongoFuncs.dbUpdatePlayerBetChance(ctx.message.from.id, parseFloat(result[0]))
-                                    .then(()=> MongoFuncs.dbChangePlayerState(ctx.message.from.id, 2));
-                                MongoFuncs.dbGetUserById(ctx.message.from.id).then((player)=>ctx.reply(`Теперь напишите размер ставки`,
-                                    Markup.keyboard([[player.balance.toString()], [(player.balance/2).toString(),
-                                        (player.balance/4).toString()], [(player.balance/10).toString()]]).oneTime().resize().extra()));
+    function userWrapper(uid, name, balance, state, bet_chance, bet_size) {
+        return {
+            [config.user.uid]: uid,
+            [config.user.name]: name,
+            [config.user.balance]: balance,
+            [config.user.state]: state,
+            [config.user.current_bet]: {
+                [config.user.bet_chance]: bet_chance,
+                [config.user.bet_size]: bet_size
+            },
+            [config.user.language]: config.languages.ru
+        }
+    }
 
-                            } else {
-                                ctx.reply(`Введите число в пределах 1 - 99!`)
-                            }
-                        }
-                    }
-                    else ctx.reply(`Что-то вы совсем не так написали. Мб по ебалу? (еще раз)`);
-                    break;
-                case 2:
-                    if(/\d+(\.\d+)?/gm.test(ctx.message.text)) {
-                        let result = ctx.message.text.match(/\d+/);
-                        if (result.length !== 1) {
-                            ctx.reply(`Уупс! Что-то не понял(! Попробуйте ещё раз.`)
-                        } else {
-                            const betSize = parseFloat(result[0]);
-                            MongoFuncs.dbUpdatePlayerBetSize(ctx.message.from.id, betSize)
-                                .then(()=> {
-                                    MongoFuncs.dbGetUserById(ctx.message.from.id)
-                                        .then((player) => {
-                                            console.log(betSize);
-                                            if(betSize <= 0) {
-                                                ctx.reply("Ты шо ебобо? Иди-ка ты нахуй с такими ставками");
-                                                return;
-                                            }
-                                            if(betSize > player[Config.USER.BALANCE]) {
-                                                ctx.reply("Недостаточно сабжей :(");
-                                                return;
-                                            }
-                                        MongoFuncs.dbUpdatePlayerBalance(ctx.message.from.id,
-                                            parseFloat((player[Config.USER.BALANCE] - betSize).toFixed(3))
-                                        ).then(() => {
-                                            ctx.reply(`Считаем вашу ставку...`)
-                                                .then(() => {
-                                                    let win = processBet(player[Config.USER.CURRENT_BET]);
-                                                    let finishCB = function () {
-                                                        ctx.reply(`Вау! Вы выиграли: ${win} сабжей! РЕРЕЙЗ!`, MarkUpKeyboards.PLAY);
-                                                        MongoFuncs.dbClearPlayerBet(ctx.message.from.id, player[Config.USER.BALANCE] + win);
-                                                    }
-                                                    if(win === 0) ctx.reply(`К сожалению вы проиграли(\nСыграем еше?`, MarkUpKeyboards.PLAY);
-                                                    else if(player[Config.USER.CURRENT_BET][Config.USER.BET_CHANCE] <= 5)
-                                                            ctx.reply("💸💸💸MEGA SUPER BIG WIN💸💸💸\n").then(finishCB);
-                                                        else if(player[Config.USER.CURRENT_BET][Config.USER.BET_CHANCE] <= 10)
-                                                                ctx.reply("💸💸SUPER BIG WIN💸💸\n").then(finishCB);
-                                                            else if(player[Config.USER.CURRENT_BET][Config.USER.BET_CHANCE] <= 25)
-                                                                    ctx.reply("💸BIG WIN💸\n").then(finishCB);
-                                                            else ctx.reply("💸WIN💸\n").then(finishCB);
-                                                }
-                                            );
-                                        })
-                                    })
-                                });
-                        }
-                    }
-                    else ctx.reply(`Что-то вы совсем не так написали. Мб по ебалу? (еще раз)`);
-                    MongoFuncs.dbChangePlayerState(ctx.message.from.id, 0)
+    async function callbackHandler(ctx) {
+        let lang = await mongoFuncs.dbGetUserLanguage(ctx.update.callback_query.from.id)
+        switch (ctx.update.callback_query.data) {
+            case config.callbacks.game_start:
+                ctx.reply(locale.callbacks.letsPlay[lang], keyboards.play);
+            break;
+            case config.callbacks.game_jad:
+                let player = await mongoFuncs.dbGetUserById(ctx.update.callback_query.from.id)
+                if(player.balance === 0) {
+                    ctx.reply(locale.callbacks.fuckYou[lang]);
+                } else {
+                    ctx.reply(locale.bets.tellBetChance[lang], keyboards.jad.bet_chance);
+                    mongoFuncs.dbChangePlayerState(ctx.update.callback_query.from.id, config.states.STATE_JAD_BET_SIZE);
+                }
+            break;
+            case config.callbacks.game_poker:
+                ctx.reply(locale.pokerDevelop[lang]);
+            break;
+            case config.callbacks.game_balance:
+                ctx.reply(await onBalance(ctx.update.callback_query.from.id));
+        }
+    }
 
-            }
-        });
+    async function textHandler(ctx) {
+        let user = await mongoFuncs.dbGetUserById(ctx.message.from.id), lang = user[config.user.language];
+        let result;
+        switch (user.bets) {
+            case config.states.STATE_EMPTY:
+                ctx.reply(locale.bets.dontUnderstand[lang]);
+                break;
+            case config.states.STATE_JAD_BET_CHOICE:
+                result = ctx.message.text.match(/\d+/);
+                if (!/\d+(\.\d+)?/gm.test(ctx.message.text) || result.length !== 1) {
+                    ctx.reply(locale.errors.dontUnderstand[lang]);
+                    return;
+                }
+                if ((result[0] <= 0 || result[0] >= 100)) {
+                    ctx.reply(locale.errors.wrongNumber[lang]);
+                    return;
+                }
+                mongoFuncs.dbUpdatePlayerBetChance(ctx.message.from.id, parseFloat(result[0]));
+                mongoFuncs.dbChangePlayerState(ctx.message.from.id, config.states.STATE_JAD_BET_SIZE);
+                ctx.reply(locale.bets.tellBetSize[lang], keyboards.jad.bet_size(
+                    await mongoFuncs.dbGetUserById(ctx.message.from.id)[config.user.balance]));
+                break;
+            case config.states.STATE_JAD_BET_SIZE:
+                if (!/\d+(\.\d+)?/gm.test(ctx.message.text)) {
+                    ctx.reply(locale.errors.dontUnderstand[lang]);
+                    return;
+                }
+                result = ctx.message.text.match(/\d+/);
+                if (result.length !== 1) {
+                    ctx.reply(locale.errors.dontUnderstand[lang]);
+                    return;
+                }
+                const betSize = parseFloat(result[0]);
+                mongoFuncs.dbUpdatePlayerBetSize(ctx.message.from.id, betSize);
+                let newUser = await mongoFuncs.dbGetUserById(ctx.message.from.id)
+                if (betSize <= 0) {
+                    ctx.reply(locale.errors.wrongBet[lang]);
+                    return;
+                }
+                if (betSize > newUser[config.user.balance]) {
+                    ctx.reply(locale.errors.wrongNumber[lang]);
+                    return;
+                }
+                mongoFuncs.dbUpdatePlayerBalance(ctx.message.from.id,
+                    parseFloat((newUser[config.user.balance] - betSize).toFixed(3)));
+                let win = processBet(newUser[config.user.current_bet]);
+                await ctx.reply(locale.bets.calculatingBet[lang])
+                if (win === 0) {
+                    ctx.reply(locale.bets.tellLose[lang], keyboards.play);
+                    return;
+                }
+                locale.bets.tellCongratulations(win, newUser[config.user.current_bet][config.user.bet_chance]);
+                mongoFuncs.dbChangePlayerState(ctx.message.from.id, config.states.STATE_EMPTY);
+                break;
+        }
     }
 
     function processBet(bet) {
-        return (Math.random() * 100 < bet[Config.USER.BET_CHANCE])
-            ? bet[Config.USER.BET_SIZE] * 100/bet[Config.USER.BET_CHANCE] : 0;
+        return (Math.random() * 100 < bet[config.user.bet_chance])
+            ? bet[config.user.bet_size] * 100/bet[config.user.bet_chance] : 0;
     }
 
-    function onHelp(ctx) {
-        ctx.reply(`Расклад такой:\n   /balance - узнать баланс`);
+    async function onHelp(ctx) {
+        ctx.reply(locale.help[await mongoFuncs.dbGetUserLanguage(ctx.message.from.id)]);
     }
 
-    function onGetList(ctx) {
-        MongoFuncs.dbGetPlayers().then((res) => ctx.reply(res));
+    async function onGetList(ctx) {
+        ctx.reply(await mongoFuncs.dbGetPlayers());
     }
     
     async function checkAdmin(uid) {
-        let query = await MongoFuncs.dbGetUserById(uid);
-        return query !== null ? query[Config.USER.ADMIN] : false;
+        let query = await mongoFuncs.dbGetUserById(uid);
+        return !!query;
     }
     
     async function userExist(uid) {
-        let query = await MongoFuncs.dbGetUserById(uid);
-        return query !== null;
+        let query = await mongoFuncs.dbGetUserById(uid);
+        return !!query;
     }
 
-    async function onBalance(ctx) {
-        return await (ctx.message !== undefined) ?
-            MongoFuncs.dbGetUserById(ctx.message.from.id).then((res) => ctx.reply(`Ваш баланс - ${res[Config.USER.BALANCE]} сабжей`)) :
-            MongoFuncs.dbGetUserById(ctx.update.callback_query.from.id).then((res) => ctx.reply(`Ваш баланс - ${res[Config.USER.BALANCE]} сабжей`));
+    async function onBalance(uid) {
+        return locale.balance(await mongoFuncs.dbGetUserById(uid)[config.user.balance]);
     }
 
     async function onSetBalance(ctx) {
         let res = ctx.message.text.match(/\w+/gm);
         console.log(res)
-        if(res.length !== 3) ctx.reply(`додик`);
-        else MongoFuncs.dbUpdatePlayerBalance(parseInt(res[1]), parseFloat(res[2]));
+        if(res.length !== 3)
+            ctx.reply(locale.errors.dontUnderstand[await mongoFuncs.dbGetUserLanguage(ctx.message.from.id)]);
+        else
+            mongoFuncs.dbUpdatePlayerBalance(parseInt(res[1]), parseFloat(res[2]));
     }
 
     return {
@@ -182,7 +153,7 @@ function Core() {
         onStart,
         onGetList,
         onHelp,
-        dumpDB : MongoFuncs.dbDump,
+        dumpDB : mongoFuncs.dbDump,
         callbackHandler,
         textHandler
     }
