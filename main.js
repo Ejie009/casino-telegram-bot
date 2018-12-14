@@ -3,13 +3,10 @@ const Telegraf = require('telegraf');
 const Core = require('./core');
 const bot = new Telegraf(process.env.BOT_TOKEN, { telegram:{ webhookReply:false } });
 
-bot.start(Core.onStart);
 
-bot.hears(/\/get/, Core.onGetList);
-bot.hears(/\/db_drop/, Core.dumpDB);
-bot.hears(/\/help/, Core.onHelp);
-bot.hears(/\/set*/, Core.onSetBalance)
-bot.hears(/\/balance/, Core.onBalance)
+bot.use(async (ctx, next) => {
+    (await Core).middleWareHandler(ctx);
+})
 
 bot.on("text", Core.textHandler);
 bot.on("callback_query", Core.callbackHandler);

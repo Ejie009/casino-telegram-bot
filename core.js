@@ -5,6 +5,15 @@ async function Core() {
     const keyboards = require('./keyboards');
     const locale = require('./locale');
 
+    const doMap = {
+        [config.routes.start]: onStart,
+        [config.routes.get]: onGetList,
+        [config.routes.dbdrop]: dumpDB,
+        [config.routes.help]: onHelp,
+        [config.routes.set]: onSetBalance,
+        [config.routes.balance]: onBalance
+    }
+
     await mongoFuncs.dbInit();
 
     async function onStart(ctx) {
@@ -147,13 +156,22 @@ async function Core() {
             mongoFuncs.dbUpdatePlayerBalance(parseInt(res[1]), parseFloat(res[2]));
     }
 
+    function dumpDB() {
+        return mongoFuncs.dbDump();
+    }
+
+    function middleWareHandler(ctx) {
+        Object.keys(doMap).forEach(key => key.test(ctx.message.text) ? doMap[key](ctx) : 0);
+    }
+
     return {
+        middleWareHandler,
         onSetBalance,
         onBalance,
         onStart,
         onGetList,
         onHelp,
-        dumpDB : mongoFuncs.dbDump,
+        dumpDB,
         callbackHandler,
         textHandler
     }

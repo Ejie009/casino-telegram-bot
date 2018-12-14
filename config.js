@@ -31,5 +31,13 @@ module.exports = Object.freeze({
       STATE_EMPTY: 0,
       STATE_JAD_BET_CHOICE: 1,
       STATE_JAD_BET_SIZE: 2
+  },
+  routes: {
+    start: "/\/start/",
+    get: "/\/get/",
+    dbdrop : "/\/db_drop",
+    help: "/\/help/",
+    set: "/\/set*/",
+    balance: "/\/balance/"
   }
 })
