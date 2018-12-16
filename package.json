@@ -13,6 +13,9 @@
     "dotenv": "^4.0.0",
     "telegraf": "^3.25.0",
     "mongodb": "latest",
-    "express": "latest",
+    "express": "latest"
+  },
+  "devDependencies": {
+    "prettier": "^1.15.3"
   }
 }
