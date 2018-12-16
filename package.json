@@ -1,6 +1,6 @@
 {
-  "name": "untitled",
-  "version": "1.0.0",
+  "name": "casino-bot",
+  "version": "1.0.1",
   "description": "telegrafbot",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "dev": "nodemon main.js"
   },
   "author": "dal9",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "dotenv": "^4.0.0",
     "telegraf": "^3.25.0",
