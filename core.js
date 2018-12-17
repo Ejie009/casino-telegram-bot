@@ -143,7 +143,7 @@ async function Core() {
           return;
         }
         const betSize = parseFloat(result[0]);
-        mongoFuncs.dbUpdatePlayerBetSize(ctx.message.from.id, betSize);
+        await mongoFuncs.dbUpdatePlayerBetSize(ctx.message.from.id, betSize);
         let newUser = await mongoFuncs.dbGetUserById(ctx.message.from.id);
         if (betSize <= 0) {
           ctx.reply(locale.errors.wrongBet[lang]);
@@ -158,7 +158,6 @@ async function Core() {
           parseFloat((newUser[config.user.balance] - betSize).toFixed(3))
         );
 
-        console.log("I work herre", user);
         let win = processBet(newUser[config.user.current_bet]);
         await ctx.reply(locale.state.calculatingBet[lang]);
         if (win === 0) {
