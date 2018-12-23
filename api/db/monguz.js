@@ -1,5 +1,6 @@
 const cfg = require('./config')
 const mongoose = require('mongoose')
+
 const handleError = err => {
   if (err) throw err
 }
@@ -9,118 +10,93 @@ mongoose.connect(
   err => handleError(err)
 )
 
-let db = mongoose.connection
-
 const userSchema = new mongoose.Schema({
   [cfg.user.uid]: Number,
   [cfg.user.name]: String,
   [cfg.user.balance]: Number,
   [cfg.user.state]: Number,
-  [cfg.user.current_bet]: {
-    [cfg.user.bet_chance]: Number,
-    [cfg.user.bet_size]: Number
+  [cfg.user.bet]: {
+    [cfg.user.chance]: Number,
+    [cfg.user.size]: Number
   },
   [cfg.user.language]: String
 })
 
 const User = mongoose.model('User', userSchema)
 
-const dump = () => db.dropCollection(cfg.table, err => handleError(err))
+const drop = () => mongoose.connection.dropCollection(cfg.table)
 
-const insert = user => User.create(user, err => handleError(err))
+const insert = user => User.create(user)
 
 const updateState = (id, newState) =>
-  User.update(
+  User.updateOne(
     { [cfg.user.uid]: id },
-    { $set: { [cfg.user.state]: newState } },
-    err => handleError(err)
-  )
+    { $set: { [cfg.user.state]: newState } }
+  ).exec()
 
 const updateBet = (id, newBet) =>
-  User.update(
+  User.updateOne(
     { [cfg.user.uid]: id },
-    { $set: { [cfg.user.current_bet]: newBet } },
-    err => handleError(err)
-  )
+    { $set: { [cfg.user.bet]: newBet } }
+  ).exec()
 
 const updateBetSize = (id, newBetSize) =>
-  User.update(
+  User.updateOne(
     { [cfg.user.uid]: id },
-    { $set: { [cfg.user.current_bet + '.' + cfg.user.bet_size]: newBetSize } },
-    err => handleError(err)
-  )
+    { $set: { [cfg.user.bet + '.' + cfg.user.size]: newBetSize } }
+  ).exec()
 
 const updateBetChance = (id, newBetChance) =>
-  User.update(
+  User.updateOne(
     { [cfg.user.uid]: id },
     {
-      $set: { [cfg.user.current_bet + '.' + cfg.user.bet_chance]: newBetChance }
-    },
-    err => handleError(err)
-  )
+      $set: { [cfg.user.bet + '.' + cfg.user.chance]: newBetChance }
+    }
+  ).exec()
 
 const updateBalance = (id, newBalance) =>
-  User.update(
+  User.updateOne(
     { [cfg.user.uid]: id },
-    { $set: { [cfg.user.balance]: newBalance } },
-    err => handleError(err)
-  )
+    { $set: { [cfg.user.balance]: newBalance } }
+  ).exec()
 
 const clearBet = (id, newBalance) =>
-  User.update(
+  User.updateOne(
     { [cfg.user.uid]: id },
     {
       $set: {
         [cfg.user.balance]: newBalance,
         [cfg.user.state]: 0,
-        [cfg.user.current_bet + '.' + cfg.user.bet_chance]: 0,
-        [cfg.user.current_bet + '.' + cfg.user.bet_size]: 0
+        [cfg.user.bet + '.' + cfg.user.chance]: 0,
+        [cfg.user.bet + '.' + cfg.user.size]: 0
       }
-    },
-    err => handleError(err)
-  )
+    }
+  ).exec()
 
-const get = callback =>
-  User.find((err, res) => {
-    handleError(err)
-    callback(res)
-  })
+const get = () =>
+  User.find().exec()
 
-const getByFilter = (filter, callback) =>
-  User.findOne(filter, (err, res) => {
-    handleError(err)
-    callback(res)
-  })
+const getByFilter = (filter) =>
+  User.findOne(filter).exec()
 
-const getOne = (id, callback) =>
-  User.findOne({ [cfg.user.uid]: id }, (err, res) => {
-    handleError(err)
-    callback(res)
-  })
+const getOne = (id) =>
+  User.findOne({ [cfg.user.uid]: id }).exec()
 
-const getPlayers = callback =>
+const getPlayers = () =>
   User.find(
     { [cfg.user.admin]: false },
     { projection: { [cfg.user.admin]: 0 } },
-    (err, res) => {
-      handleError(err)
-      callback(res)
-    }
-  )
+  ).exec()
 
-const getAdmins = callback =>
+const getAdmins = () =>
   User.find(
     { [cfg.user.admin]: true },
     { projection: { [cfg.user.admin]: 0 } },
-    (err, res) => {
-      handleError(err)
-      callback(res)
-    }
-  )
+  ).exec()
 
 module.exports = {
   clearBet,
-  dump,
+  drop,
   get,
   getOne,
   getByFilter,

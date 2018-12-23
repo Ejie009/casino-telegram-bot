@@ -34,7 +34,7 @@ function PokerSession(players, minBet, gameSpeed) {
     };
   }
 
-  let pConfig = require("./api/config").user,
+  let pConfig = require("../config").user,
     gPlayerList = new LinkedList(),
     gTable = [],
     gBank = 0,
@@ -98,10 +98,9 @@ function PokerSession(players, minBet, gameSpeed) {
   );
 
   function initGame() {
-    gDeck.shuffle();
+    gDeck.shuffle()
     for (let j = 0; j < 3; j++) gTable.push(gDeck.pop());
     let head = gPlayerList.getHead();
-    while()
       for (let j = 0; j < 3; j++) p.addCard(gDeck.pop());
     if (gCurrent === gPlayerList.length) gCurrent = 0;
     gDealer = gPlayerList[gCurrent++];

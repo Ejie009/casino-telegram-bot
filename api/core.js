@@ -1,88 +1,57 @@
 'use strict'
 
-
 function Core() {
-  const db = require('/api/db/monguz')
-  const cfg = require('../config')
-  const keyboards = require('../locale/keyboards')
-  const locale = require('../locale/locale')
+  const db = require('./db/monguz')
+  const cfg = require('./config')
+  const keyboards = require('./locale/keyboards')
+  const locale = require('./locale/locale')
+  const User = require('./user/user')
+  const {Jad} = require('./games/export')
 
-  const doMap = {
-    [cfg.routes.start]: onStart,
-    [cfg.routes.get]: onGetList,
-    [cfg.routes.dump]: dumpDB,
-    [cfg.routes.help]: onHelp,
-    [cfg.routes.set]: onSetBalance,
-    [cfg.routes.balance]: onBalance
+  const Router = {
+    [cfg.routes.start]: start,
+    [cfg.routes.get]: getUsers,
+    [cfg.routes.drop]: dropDb,
+    [cfg.routes.help]: help,
+    [cfg.routes.set]: setBalance,
+    [cfg.routes.balance]: getBalance
   }
 
-  async function onStart(ctx) {
-    let lang = await userExist(ctx.message.from.id)
-      ? await db.dbGetUserLanguage(ctx.message.from.id)
-      : cfg.defaultLanguage
-    if (exists) {
-      ctx.reply(
-        locale.helloBro[lang](ctx.message.from.first_name),
-        keyboards.hello(lang)
+  async function start(ctx) {
+    const user = await db.getOne(ctx.message.from.id)
+    const lang = user ? user[cfg.user.language] : cfg.defaultLanguage
+    ctx.reply(locale.start[lang], keyboards.hello(lang))
+    if(!user)
+      db.insert(
+        User.createDefault(ctx.message.from.id, ctx.message.from.first_name)
       )
-    } else {
-      ctx.reply(locale.helloWho[lang], keyboards.hello(lang))
-      db.dbInsertPlayer(
-        userWrapper(
-          ctx.message.from.id,
-          ctx.message.from.first_name,
-          500,
-          0,
-          0,
-          0
-        )
-      )
-    }
   }
 
-  function userWrapper(uid, name, balance, state, bet_chance, bet_size) {
-    return {
-      [cfg.user.uid]: uid,
-      [cfg.user.name]: name,
-      [cfg.user.balance]: balance,
-      [cfg.user.state]: state,
-      [cfg.user.current_bet]: {
-        [cfg.user.bet_chance]: bet_chance,
-        [cfg.user.bet_size]: bet_size
-      },
-      [cfg.user.language]: cfg.languages.ru
-    }
-  }
 
   async function callbackHandler(ctx) {
-    console.log(ctx.update.callback_query.from.id)
-    let lang = await db.dbGetUserLanguage(
-      ctx.update.callback_query.from.id
-    )
-    console.log(lang)
+    ctx.answerCbQuery()
+    const user = await db.getOne(ctx.update.callback_query.from.id)
+    const lang = user[cfg.user.language]
     switch (ctx.update.callback_query.data) {
-    case cfg.callbacks.game_start:
+    case cfg.callbacks.game.start:
       ctx.reply(locale.callbacks.letsPlay[lang], keyboards.play)
       break
-    case cfg.callbacks.game_jad:
-      let player = await db.dbGetUserById(
-        ctx.update.callback_query.from.id
-      )
-      if (player.balance === 0) {
-        ctx.reply(locale.callbacks.fuckYou[lang])
+    case cfg.callbacks.game.jad:
+      if (user=== 0) {
+        ctx.reply(locale.callbacks.tooPoor[lang])
       } else {
-        ctx.reply(locale.state.tellBetChance[lang], keyboards.jad.bet_chance)
-        db.dbChangePlayerState(
+        ctx.reply(locale.state.tellBetChance[lang], keyboards.jad.chance)
+        db.updateState(
           ctx.update.callback_query.from.id,
-          cfg.states.STATE_JAD_BET_CHANCE
+          cfg.states.JAD_BET_CHANCE
         )
       }
       break
-    case cfg.callbacks.game_poker:
+    case cfg.callbacks.game.poker:
       ctx.reply(locale.pokerDevelop[lang])
       break
-    case cfg.callbacks.game_balance:
-      ctx.reply(await onBalance(ctx.update.callback_query.from.id))
+    case cfg.callbacks.game.balance:
+      await getBalance(ctx)
     }
   }
 
@@ -90,22 +59,19 @@ function Core() {
     if (middleWareHandler(ctx)) {
       return
     }
-    if (!(await userExist(ctx.message.from.id))) {
-      console.log('WTF')
+    let user = await db.getOne(ctx.message.from.id)
+    if (!user) {
       ctx.reply(locale.errors.unknownUser[cfg.defaultLanguage])
       return
     }
-    let user = await db.dbGetUserById(ctx.message.from.id)
-
       
-    let lang = user[cfg.user.language]
+    const lang = user[cfg.user.language]
     let result
-    console.log(user.state)
     switch (user[cfg.user.state]) {
-    case cfg.states.STATE_EMPTY:
+    case cfg.states.EMPTY:
       ctx.reply(locale.errors.dontUnderstand[lang])
       break
-    case cfg.states.STATE_JAD_BET_CHANCE:
+    case cfg.states.JAD_BET_CHANCE:
       result = ctx.message.text.match(/\d+/)
       if (!/\d+(\.\d+)?/gm.test(ctx.message.text) || result.length !== 1) {
         ctx.reply(locale.errors.dontUnderstand[lang])
@@ -115,24 +81,21 @@ function Core() {
         ctx.reply(locale.errors.wrongNumber[lang])
         return
       }
-      db.dbUpdatePlayerBetChance(
+      db.updateBetChance(
         ctx.message.from.id,
         parseFloat(result[0])
       )
-      await db.dbChangePlayerState(
+      await db.updateState(
         ctx.message.from.id,
-        cfg.states.STATE_JAD_BET_SIZE
+        cfg.states.JAD_BET_SIZE
       )
       ctx.reply(
         locale.state.tellBetSize[lang],
-        keyboards.jad.bet_size(
-          (await db.dbGetUserById(ctx.message.from.id))[
-            cfg.user.balance
-          ]
+        keyboards.jad.size(user[cfg.user.balance]
         )
       )
       break
-    case cfg.states.STATE_JAD_BET_SIZE:
+    case cfg.states.JAD_BET_SIZE:
       if (!/\d+(\.\d+)?/gm.test(ctx.message.text)) {
         ctx.reply(locale.errors.dontUnderstand[lang])
         return
@@ -143,22 +106,18 @@ function Core() {
         return
       }
       const betSize = parseFloat(result[0])
-      await db.dbUpdatePlayerBetSize(ctx.message.from.id, betSize)
-      let newUser = await db.dbGetUserById(ctx.message.from.id)
-      if (betSize <= 0) {
-        ctx.reply(locale.errors.wrongBet[lang])
-        return
-      }
-      if (betSize > newUser[cfg.user.balance]) {
+      await db.updateBetSize(ctx.message.from.id, betSize)
+      user = await db.getOne(ctx.message.from.id)
+      if (betSize > user[cfg.user.balance]) {
         ctx.reply(locale.errors.wrongNumber[lang])
         return
       }
-      db.dbUpdatePlayerBalance(
+      db.updateBalance(
         ctx.message.from.id,
-        parseFloat((newUser[cfg.user.balance] - betSize).toFixed(3))
+        parseFloat((user[cfg.user.balance] - betSize).toFixed(3))
       )
 
-      let win = processBet(newUser[cfg.user.current_bet])
+      const win = Jad.process(user[cfg.user.bet][cfg.user.chance], betSize)
       await ctx.reply(locale.state.calculatingBet[lang])
       if (win === 0) {
         ctx.reply(locale.state.tellLose[lang], keyboards.play)
@@ -167,84 +126,57 @@ function Core() {
         ctx.reply(
           locale.state.tellCongratulations(
             win,
-            newUser[cfg.user.current_bet][cfg.user.bet_chance]
-          )
+            user[cfg.user.bet][cfg.user.chance]
+          )[user[cfg.user.language]]
         )
-        db.dbUpdatePlayerBalance(
+        db.updateBalance(
           ctx.message.from.id,
-          newUser[cfg.user.balance] + win
+          user[cfg.user.balance] + win
         )
       }
-      db.dbChangePlayerState(
+      db.updateState(
         ctx.message.from.id,
-        cfg.states.STATE_EMPTY
+        cfg.states.EMPTY
       )
       break
-    default:
-      console.log('nthng')
     }
   }
 
-  function processBet(bet) {
-    return Math.random() * 100 < bet[cfg.user.bet_chance]
-      ? (bet[cfg.user.bet_size] * 100) / bet[cfg.user.bet_chance]
-      : 0
-  }
-
-  async function onHelp(ctx) {
+  async function help(ctx) {
     ctx.reply(
-      locale.help[await db.dbGetUserLanguage(ctx.message.from.id)]
+      locale.help[(await db.getOne(ctx.message.from.id))[cfg.user.language]]
     )
   }
 
-  async function onGetList(ctx) {
-    ctx.reply(await db.dbGetPlayers())
+  async function getUsers(ctx) {
+    ctx.reply(await db.get())
   }
 
-  async function checkAdmin(uid) {
-    let query = await db.dbGetUserById(uid)
-    return !!query
+  async function getBalance(ctx) {
+    const user = await db.getOne(ctx.message ? ctx.message.from.id : ctx.update.callback_query.from.id)
+    ctx.reply(locale.balance[user[cfg.user.language]](user[cfg.user.balance]))
   }
 
-  async function userExist(uid) {
-    let query = await db.dbGetUserById(uid)
-    console.log('query:', !!query)
-    return !!query
-  }
-
-  async function onBalance(ctx) {
-    ctx.reply(
-      locale.balance['ru'](
-        (await db.dbGetUserById(ctx.message.from.id))[
-          cfg.user.balance
-        ]
-      )
-    )
-  }
-
-  async function onSetBalance(ctx) {
+  async function setBalance(ctx) {
     let res = ctx.message.text.match(/\w+/gm)
-    console.log(res)
+    const user = db.getOne(ctx.message.from.id)
     if (res.length !== 3)
       ctx.reply(
-        locale.errors.dontUnderstand[
-          await db.dbGetUserLanguage(ctx.message.from.id)
-        ]
+        locale.errors.dontUnderstand[user[cfg.user.language]]
       )
-    else db.dbUpdatePlayerBalance(parseInt(res[1]), parseFloat(res[2]))
+    else db.updateBalance(parseInt(res[1]), parseFloat(res[2]))
   }
 
-  function dumpDB() {
-    return db.dbDump()
+  function dropDb() {
+    return db.drop()
   }
 
   function middleWareHandler(ctx) {
     if (ctx.message === undefined) return false
     let completed = false
-    Object.keys(doMap).forEach(key => {
+    Object.keys(Router).forEach(key => {
       if (new RegExp(key, 'gm').test(ctx.message.text)) {
-        console.log('hi')
-        doMap[key](ctx)
+        Router[key](ctx)
         completed = true
       }
     })
@@ -252,13 +184,6 @@ function Core() {
   }
 
   return {
-    middleWareHandler,
-    onSetBalance,
-    onBalance,
-    onStart,
-    onGetList,
-    onHelp,
-    dumpDB,
     callbackHandler,
     textHandler
   }
