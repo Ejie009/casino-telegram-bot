@@ -1,4 +1,4 @@
-const user = require('../user/config')
+const user = require('./user')
 module.exports = Object.freeze({
   url: 'mongodb://localhost:27017/',
   table: 'casino-db',

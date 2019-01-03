@@ -1,18 +1,12 @@
 const Markup = require('telegraf/markup')
 const cfg = require('./config')
-const locale = require('./locale')
+const locale = require('./index')
 
 module.exports = {
   hello: lang =>
     Markup.inlineKeyboard([
-      Markup.callbackButton(
-        locale.callbacks.startGame[lang],
-        cfg.callbacks.game.start
-      ),
-      Markup.callbackButton(
-        locale.callbacks.getBalance[lang],
-        cfg.callbacks.game.balance
-      )
+      Markup.callbackButton(locale.callbacks.startGame[lang], cfg.callbacks.game.start),
+      Markup.callbackButton(locale.callbacks.getBalance[lang], cfg.callbacks.game.balance)
     ]).extra(),
 
   play: Markup.inlineKeyboard([

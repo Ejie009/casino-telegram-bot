@@ -29,16 +29,10 @@ const drop = () => mongoose.connection.dropCollection(cfg.table)
 const insert = user => User.create(user)
 
 const updateState = (id, newState) =>
-  User.updateOne(
-    { [cfg.user.uid]: id },
-    { $set: { [cfg.user.state]: newState } }
-  ).exec()
+  User.updateOne({ [cfg.user.uid]: id }, { $set: { [cfg.user.state]: newState } }).exec()
 
 const updateBet = (id, newBet) =>
-  User.updateOne(
-    { [cfg.user.uid]: id },
-    { $set: { [cfg.user.bet]: newBet } }
-  ).exec()
+  User.updateOne({ [cfg.user.uid]: id }, { $set: { [cfg.user.bet]: newBet } }).exec()
 
 const updateBetSize = (id, newBetSize) =>
   User.updateOne(
@@ -55,10 +49,7 @@ const updateBetChance = (id, newBetChance) =>
   ).exec()
 
 const updateBalance = (id, newBalance) =>
-  User.updateOne(
-    { [cfg.user.uid]: id },
-    { $set: { [cfg.user.balance]: newBalance } }
-  ).exec()
+  User.updateOne({ [cfg.user.uid]: id }, { $set: { [cfg.user.balance]: newBalance } }).exec()
 
 const clearBet = (id, newBalance) =>
   User.updateOne(
@@ -73,26 +64,17 @@ const clearBet = (id, newBalance) =>
     }
   ).exec()
 
-const get = () =>
-  User.find().exec()
+const get = () => User.find().exec()
 
-const getByFilter = (filter) =>
-  User.findOne(filter).exec()
+const getByFilter = filter => User.findOne(filter).exec()
 
-const getOne = (id) =>
-  User.findOne({ [cfg.user.uid]: id }).exec()
+const getOne = id => User.findOne({ [cfg.user.uid]: id }).exec()
 
 const getPlayers = () =>
-  User.find(
-    { [cfg.user.admin]: false },
-    { projection: { [cfg.user.admin]: 0 } },
-  ).exec()
+  User.find({ [cfg.user.admin]: false }, { projection: { [cfg.user.admin]: 0 } }).exec()
 
 const getAdmins = () =>
-  User.find(
-    { [cfg.user.admin]: true },
-    { projection: { [cfg.user.admin]: 0 } },
-  ).exec()
+  User.find({ [cfg.user.admin]: true }, { projection: { [cfg.user.admin]: 0 } }).exec()
 
 module.exports = {
   clearBet,

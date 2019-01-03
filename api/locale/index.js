@@ -2,8 +2,7 @@ let lang = require('./config').languages
 
 module.exports = {
   start: {
-    [lang.ru]:
-      'Привет. Помощь - /help.\nУдачи!'
+    [lang.ru]: 'Привет. Помощь - /help.\nУдачи!'
   },
   help: {
     [lang.ru]: 'Расклад такой:\n   /balance - узнать баланс'
@@ -22,8 +21,7 @@ module.exports = {
       [lang.ru]: 'Во что будем играть?'
     },
     tooPoor: {
-      [lang.ru]:
-        'Как будут деньги - приходи, а пока попрошу где-то накопить сабжей'
+      [lang.ru]: 'Как будут деньги - приходи, а пока попрошу где-то накопить сабжей'
     }
   },
   state: {

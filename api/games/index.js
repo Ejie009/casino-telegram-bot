@@ -1,4 +1,3 @@
 const Jad = require('./jad')
-module.exports = {
-  Jad
-}
+
+module.exports = { Jad }

@@ -1,4 +1,4 @@
-const defaultLanguage = require('../locale/config').defaultLanguage
+const { defaultLanguage } = require('./locale')
 module.exports = Object.freeze({
   uid: 'uid',
   name: 'name',
